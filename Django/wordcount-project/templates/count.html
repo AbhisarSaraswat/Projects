@@ -1,0 +1,8 @@
+<h1>You have {{ count }} words in your textarea!</h1>
+<h2>Your text:</h2>
+{{ fulltext }}
+<h2>Word repeatation:</h2>
+{% for word, repeat in worddict %}
+{{ word }}: {{ repeat }}
+<br>
+{% endfor %}
