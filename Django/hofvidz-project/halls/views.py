@@ -5,6 +5,11 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login
 from .models import Hall, Video
 from .forms import VideoForm, SearchForm
+from django.http import Http404
+import urllib
+from django.forms.utils import ErrorList
+
+YOUTUBE_API_KEY = 'AIzaSyAYzg0mUzXtbYoCtcruqqz0O01wAhZEQfw'
 
 
 def home(request):
@@ -18,17 +23,24 @@ def dashboard(request):
 def add_video(request, pk):
     form = VideoForm()
     search_form = SearchForm()
+    hall = Hall.objects.get(pk=pk)
+    if not hall.user == request.user:
+        raise Http404
     if request.method == 'POST':
         filled_form = VideoForm(request.POST)
-        if filled_form.is_valid:
+        if filled_form.is_valid():
             video = Video()
+            video.hall = hall
             video.url = filled_form.cleaned_data['url']
-            video.title = filled_form.cleaned_data['title']
-            video.youtube_id = filled_form.cleaned_data['youtube_id']
-            video.hall = Hall.objects.get(pk=pk)
+            parsed_url = urllib.parse.urlparse(video.url)
+            video_id = urllib.parse.parse_qs(parsed_url.query).get('v')
+            if video_id:
+                video.youtube_id = video_id[0]
+            # video.title = filled_form.cleaned_data['title']
+
             video.save()
 
-    return render(request, 'halls/add_video.html', {'form': form, 'search_form': search_form})
+    return render(request, 'halls/add_video.html', {'form': form, 'search_form': search_form, 'hall': hall})
 
 
 class SignUp(generic.CreateView):
